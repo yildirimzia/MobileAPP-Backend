@@ -12,20 +12,20 @@ interface ITokenOptions {
     secure?: boolean;
 }
 
-const refreshTokenExpire = parseInt(process.env.REFRESH_TOKEN_EXPIRE || '1200', 10);
+const refreshTokenExpire = "30d";
 
-const accessTokenExpire = parseInt(process.env.ACCESS_TOKEN_EXPIRE || '300', 10);
+const accessTokenExpire = "24h";
 
 export const accessTokenOptions: ITokenOptions = {
-    expires: new Date(Date.now() + accessTokenExpire * 60 * 60 * 1000),
-    maxAge: accessTokenExpire * 60 * 60 * 1000,
+    expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    maxAge: 24 * 60 * 60 * 1000,
     httpOnly: true,
     sameSite: 'lax',
 }
 
 export const refreshTokenOptions: ITokenOptions = {
-    expires: new Date(Date.now() + refreshTokenExpire * 24 * 60 * 60 * 1000),
-    maxAge: refreshTokenExpire * 24 * 60 * 60 * 1000,
+    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    maxAge: 30 * 24 * 60 * 60 * 1000,
     httpOnly: true,
     sameSite: 'lax',
 }
