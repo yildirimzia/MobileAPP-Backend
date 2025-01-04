@@ -18,8 +18,6 @@ export const getUserById = async (id: string) => {
 export const getAllUsersService = async () => {
     const users = await userModel.find().sort({ createdAt: -1 });
 
-
-
     return users;
 }
 
