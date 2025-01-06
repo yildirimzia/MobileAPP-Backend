@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { CatcAsyncError } from '../middleware/catcAsyncError';
 import ErrorHandler from '../utils/ErrorHandlers';
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import userModel from '../models/user.model';
+import userModel, { IUser } from '../models/user.model';
 import { sendMail } from '../utils/sendMail';
 import { accessTokenOptions, refreshTokenOptions, signAccessToken } from '../utils/jwt';
 import { redis } from '../utils/redis';
@@ -564,3 +564,43 @@ export const deleteUser = CatcAsyncError(async (req: Request, res: Response, nex
 })
 
 // End of Delete User
+
+// Şifre Sıfırlama Talebi
+export const requestPasswordReset = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+	const { email } = req.body;
+
+	// E-posta adresinin veritabanında kayıtlı olup olmadığını kontrol et
+	const user = await userModel.findOne({ email });
+
+	if (!user) {
+		return next(new ErrorHandler('Bu e-posta adresi ile kayıtlı bir kullanıcı bulunamadı', 404));
+	}
+
+	// Şifre sıfırlama token'ı oluştur
+	const resetToken = createResetToken(user);
+
+	// E-posta gönder
+	try {
+		await sendMail({
+			email: user.email,
+			subject: 'Şifre Sıfırlama Talebi',
+			template: 'reset-password-mail.ejs',
+			data: {
+				resetToken
+			}
+		});
+
+		res.status(200).json({
+			success: true,
+			message: 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.'
+		});
+	} catch (error: any) {
+		return next(new ErrorHandler(error.message, 400));
+	}
+});
+
+// Şifre sıfırlama token'ı oluşturma
+const createResetToken = (user: IUser): string => {
+	const resetToken = jwt.sign({ id: user._id }, process.env.RESET_TOKEN_SECRET as string, { expiresIn: '1h' });
+	return resetToken;
+};
