@@ -583,13 +583,11 @@ export const requestPasswordReset = CatcAsyncError(async (req: Request, res: Res
 	const cookieOptions = {
 		httpOnly: true,
 		secure: false, // Yerel ortamda güvenli cookie'yi devre dışı bırak
-		sameSite: 'lax' as 'lax' | 'strict' | 'none', // doğru türde aynı site politikası
+		sameSite: 'lax' as 'lax', // Cookie'nin aynı site politikası
 		expires: new Date(Date.now() + 5 * 60 * 1000) // 5 dakika geçerlilik süresi
 	};
 
 	res.cookie('reset_token', resetToken, cookieOptions);
-
-
 
 	// E-posta gönder
 	try {
@@ -609,6 +607,16 @@ export const requestPasswordReset = CatcAsyncError(async (req: Request, res: Res
 	} catch (error: any) {
 		return next(new ErrorHandler(error.message, 400));
 	}
+});
+
+// Şifre sıfırlama işlemi tamamlandığında cookie'yi sil
+export const completePasswordReset = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+	// Şifre sıfırlama işlemi tamamlandığında
+	res.clearCookie('reset_token'); // Cookie'yi sil
+	res.status(200).json({
+		success: true,
+		message: 'Şifre sıfırlama işlemi tamamlandı.'
+	});
 });
 
 // Şifre sıfırlama token'ı oluşturma
