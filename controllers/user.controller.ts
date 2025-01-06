@@ -579,6 +579,18 @@ export const requestPasswordReset = CatcAsyncError(async (req: Request, res: Res
 	// Şifre sıfırlama token'ı oluştur
 	const resetToken = createResetToken(user);
 
+	// Token'ı cookie olarak ayarla
+	const cookieOptions = {
+		httpOnly: true,
+		secure: false, // Yerel ortamda güvenli cookie'yi devre dışı bırak
+		sameSite: 'lax' as 'lax' | 'strict' | 'none', // doğru türde aynı site politikası
+		expires: new Date(Date.now() + 5 * 60 * 1000) // 5 dakika geçerlilik süresi
+	};
+
+	res.cookie('reset_token', resetToken, cookieOptions);
+
+
+
 	// E-posta gönder
 	try {
 		await sendMail({
