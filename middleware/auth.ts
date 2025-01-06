@@ -7,27 +7,32 @@ import { redis } from "../utils/redis";
 // Auth Authentication
 
 export const isAuthenticated = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
-    const access_token = req.cookies.access_token;
+    // Cookie'den veya Authorization header'dan token'ı al
+    const access_token = req.cookies.access_token || req.headers.authorization?.split(' ')[1];
 
     if (!access_token) {
         return next(new ErrorHandler('Lütfen önce giriş yapınız', 400));
     }
 
-    const decoded = jwt.verify(access_token, process.env.ACCESS_TOKEN as string) as JwtPayload;
+    try {
+        const decoded = jwt.verify(access_token, process.env.ACCESS_TOKEN as string) as JwtPayload;
 
-    if (!decoded) {
-        return next(new ErrorHandler('Erişim reddedildi', 400));
+        if (!decoded) {
+            return next(new ErrorHandler('Erişim reddedildi', 400));
+        }
+
+        const user = await redis.get(decoded.id);
+
+        if (!user) {
+            return next(new ErrorHandler('Erişim reddedildi', 400));
+        }
+
+        req.user = JSON.parse(user);
+        next();
+    } catch (error) {
+        return next(new ErrorHandler('Geçersiz veya süresi dolmuş token', 401));
     }
-
-    const user = await redis.get(decoded.id);
-
-    if (!user) {
-        return next(new ErrorHandler('Erişim reddedildi', 400));
-    }
-
-    req.user = JSON.parse(user);
-    next();
-})
+});
 
 //Validate User Role
 

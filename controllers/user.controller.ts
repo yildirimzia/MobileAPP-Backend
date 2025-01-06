@@ -160,7 +160,6 @@ interface ILoginRequest {
 export const loginUser = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const { email, password } = req.body as ILoginRequest;
-
 		if (!email || !password) {
 			return next(new ErrorHandler('Lütfen e-posta adresinizi ve şifrenizi giriniz', 400));
 		}
@@ -191,20 +190,42 @@ export const loginUser = CatcAsyncError(async (req: Request, res: Response, next
 
 export const logoutUser = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		res.clearCookie('access_token', { maxAge: 1 });
-		res.clearCookie('refresh_token', { maxAge: 1 });
+		console.log('Logout request received');
+		console.log('Request headers:', req.headers);
+		console.log('Request user:', req.user);
 
-		redis.del(req.user._id);
+		// Cookies'leri silme
+		res.clearCookie('access_token', {
+			httpOnly: true,
+			secure: false,
+			sameSite: 'lax',
+			path: '/',
+			expires: new Date(0)
+		});
 
+		res.clearCookie('refresh_token', {
+			httpOnly: true,
+			secure: false,
+			sameSite: 'lax',
+			path: '/',
+			expires: new Date(0)
+		});
+
+		// Redis'teki kullanıcıyı silme
+		if (req.user?._id) {
+			await redis.del(req.user._id);
+		}
+
+		// Yanıt
 		res.status(200).json({
 			success: true,
-			message: 'Çıkış yapıldı'
+			message: 'Başarıyla çıkış yapıldı'
 		});
-	}
-	catch (error: any) {
+	} catch (error: any) {
 		return next(new ErrorHandler(error.message, 400));
 	}
-})
+});
+
 
 // End of Logout User	
 
