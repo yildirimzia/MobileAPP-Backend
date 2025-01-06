@@ -1,5 +1,5 @@
 import express from 'express';
-import { activationUser, deleteUser, getAllUsers, getUserInfo, loginUser, logoutUser, registrationUser, socialAuth, updateUserAvatar, updateUserInfo, updateUserPassword, updateUserRole, updateUserToken, forgotPassword, verifyResetToken, resetPassword } from '../controllers/user.controller';
+import { activationUser, deleteUser, getAllUsers, getUserInfo, loginUser, logoutUser, registrationUser, socialAuth, updateUserAvatar, updateUserInfo, updateUserPassword, updateUserRole, updateUserToken } from '../controllers/user.controller';
 import { isAuthenticated, validateUserRole } from '../middleware/auth';
 
 const userRouter = express.Router();
@@ -30,8 +30,5 @@ userRouter.put('/update-user-role', isAuthenticated, validateUserRole('admin'), 
 
 userRouter.delete('/delete-user/:id', isAuthenticated, validateUserRole('admin'), deleteUser);
 
-userRouter.post('/forgot-password', forgotPassword);
-userRouter.post('/verify-reset-token', verifyResetToken);
-userRouter.post('/reset-password', resetPassword);
 
 export default userRouter;
