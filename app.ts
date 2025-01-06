@@ -10,9 +10,21 @@ dotenv.config();
 
 export const app = express();
 
+const allowedOrigins = [
+    'http://localhost:8081',       // Frontend tarayıcısı
+    'http://192.168.1.198:8081',  // iOS simülatöründen erişim
+    'http://localhost:8000'   // Backend kendi kendine erişim yapabilir
+];
+
 // CORS options
 const corsOptions = {
-    origin: process.env.ORIGIN || 'http://192.168.1.198:8080',
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-csrf-token'],
