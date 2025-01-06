@@ -12,7 +12,7 @@ export const app = express();
 
 // CORS options
 const corsOptions = {
-    origin: process.env.ORIGIN || 'http://192.168.1.100:8081',
+    origin: process.env.ORIGIN || 'http://192.168.1.198:8080',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-csrf-token'],
