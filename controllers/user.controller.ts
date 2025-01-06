@@ -8,6 +8,7 @@ import { accessTokenOptions, refreshTokenOptions, signAccessToken } from '../uti
 import { redis } from '../utils/redis';
 import { deleteUserService, getAllUsersService, getUserById, updateUserRoleService } from '../services/user.service';
 import cloudinary from 'cloudinary';
+import { v4 as uuidv4 } from 'uuid';
 
 interface IRegistrationBody {
 	name: string;
@@ -563,3 +564,68 @@ export const deleteUser = CatcAsyncError(async (req: Request, res: Response, nex
 })
 
 // End of Delete User
+
+// Forgot Password
+export const forgotPassword = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+	const { email } = req.body;
+	const user = await userModel.findOne({ email });
+
+	if (!user) {
+		return next(new ErrorHandler('Kullanıcı bulunamadı', 404));
+	}
+
+	const resetToken = uuidv4(); // Generate a unique token
+	await redis.set(resetToken, user._id.toString(), 'EX', 3600); // Store token in Redis with 1 hour expiration
+
+	await sendMail({
+		email: user.email,
+		subject: 'Şifre Sıfırlama Talebi',
+		template: 'reset-password-mail.ejs',
+		data: { resetToken }
+	});
+
+	res.status(200).json({
+		success: true,
+		message: 'Şifre sıfırlama bağlantısı e-posta ile gönderildi.'
+	});
+});
+
+// Verify Reset Token
+export const verifyResetToken = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+	const { token } = req.body;
+	const userId = await redis.get(token);
+
+	if (!userId) {
+		return next(new ErrorHandler('Geçersiz veya süresi dolmuş token', 400));
+	}
+
+	res.status(200).json({
+		success: true,
+		message: 'Token geçerli, yeni şifreyi girin.'
+	});
+});
+
+// Reset Password
+export const resetPassword = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+	const { token, newPassword } = req.body;
+	const userId = await redis.get(token);
+
+	if (!userId) {
+		return next(new ErrorHandler('Geçersiz veya süresi dolmuş token', 400));
+	}
+
+	const user = await userModel.findById(userId);
+	if (!user) {
+		return next(new ErrorHandler('Kullanıcı bulunamadı', 404));
+	}
+
+	user.password = newPassword; // Update password
+	await user.save();
+
+	await redis.del(token); // Remove token from Redis
+
+	res.status(200).json({
+		success: true,
+		message: 'Şifre başarıyla güncellendi.'
+	});
+});
