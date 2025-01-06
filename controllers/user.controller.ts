@@ -596,7 +596,8 @@ export const requestPasswordReset = CatcAsyncError(async (req: Request, res: Res
 			subject: 'Şifre Sıfırlama Talebi',
 			template: 'reset-password-mail.ejs',
 			data: {
-				resetToken
+				resetToken,
+				userId: user._id
 			}
 		});
 
@@ -624,3 +625,19 @@ const createResetToken = (user: IUser): string => {
 	const resetToken = jwt.sign({ id: user._id }, process.env.RESET_TOKEN_SECRET as string, { expiresIn: '1h' });
 	return resetToken;
 };
+
+// Token'ı doğrulama
+export const verifyResetToken = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+	const { token } = req.params; // Token'ı URL parametresi olarak al
+
+	try {
+		const decoded = jwt.verify(token, process.env.RESET_TOKEN_SECRET as string) as JwtPayload; // Token'ı doğrula
+		res.status(200).json({
+			success: true,
+			message: 'Token geçerli',
+			userId: decoded.id // Kullanıcı ID'sini döndür
+		});
+	} catch (error) {
+		return next(new ErrorHandler('Geçersiz veya süresi dolmuş token', 401));
+	}
+});
