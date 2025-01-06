@@ -12,16 +12,19 @@ export const app = express();
 
 // CORS options
 const corsOptions = {
-    origin: true, // veya process.env.ORIGIN
+    origin: process.env.ORIGIN || 'http://192.168.1.100:8081',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-csrf-token']
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-csrf-token'],
+    exposedHeaders: ['set-cookie'],
+    sameSite: 'none',
+    secure: false // Development için false, production'da true olmalı
 };
 
-// Middleware
-app.use(express.json({ limit: '50mb' }));
+// Middleware sıralaması önemli
 app.use(cookieParser());
 app.use(cors(corsOptions));
+app.use(express.json({ limit: '50mb' }));
 
 // Routes
 app.use('/api/v1', userRouter);

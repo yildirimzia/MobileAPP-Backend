@@ -4,7 +4,6 @@ import ErrorHandler from '../utils/ErrorHandlers';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import userModel from '../models/user.model';
 import { sendMail } from '../utils/sendMail';
-import { IUser } from '../models/user.model'
 import { accessTokenOptions, refreshTokenOptions, signAccessToken } from '../utils/jwt';
 import { redis } from '../utils/redis';
 import { deleteUserService, getAllUsersService, getUserById, updateUserRoleService } from '../services/user.service';
@@ -176,10 +175,16 @@ export const loginUser = CatcAsyncError(async (req: Request, res: Response, next
 			return next(new ErrorHandler('Geçersiz e-posta adresi veya şifre', 400));
 		}
 
-		signAccessToken(user, 200, res);
+		const { accessToken, refreshToken } = signAccessToken(user, 200, res);
 
-	}
-	catch (error: any) {
+		// Response'u burada gönder
+		res.status(200).json({
+			success: true,
+			user,
+			accessToken
+		});
+
+	} catch (error: any) {
 		return next(new ErrorHandler(error.message, 400));
 	}
 });
@@ -190,33 +195,31 @@ export const loginUser = CatcAsyncError(async (req: Request, res: Response, next
 
 export const logoutUser = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		console.log('Logout request received');
-		console.log('Request headers:', req.headers);
-		console.log('Request user:', req.user);
-
-		// Cookies'leri silme
-		res.clearCookie('access_token', {
+		// Login ile aynı cookie ayarlarını kullan
+		const cookieOptions = {
 			httpOnly: true,
 			secure: false,
-			sameSite: 'lax',
-			path: '/',
+			sameSite: 'lax' as const,
+			path: '/'
+		};
+
+		res.cookie('access_token', '', {
+			...cookieOptions,
+			maxAge: 0,
 			expires: new Date(0)
 		});
 
-		res.clearCookie('refresh_token', {
-			httpOnly: true,
-			secure: false,
-			sameSite: 'lax',
-			path: '/',
+		res.cookie('refresh_token', '', {
+			...cookieOptions,
+			maxAge: 0,
 			expires: new Date(0)
 		});
 
-		// Redis'teki kullanıcıyı silme
+		// Redis'teki kullanıcıyı sil
 		if (req.user?._id) {
 			await redis.del(req.user._id);
 		}
 
-		// Yanıt
 		res.status(200).json({
 			success: true,
 			message: 'Başarıyla çıkış yapıldı'
