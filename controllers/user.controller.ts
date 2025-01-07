@@ -17,6 +17,10 @@ interface IRegistrationBody {
 	avatar?: string;
 }
 
+interface IResetPasswordRequest {
+	token: string;
+	newPassword: string;
+}
 
 //registration start
 export const registrationUser = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
@@ -639,5 +643,41 @@ export const verifyResetToken = CatcAsyncError(async (req: Request, res: Respons
 		});
 	} catch (error) {
 		return next(new ErrorHandler('Geçersiz veya süresi dolmuş token', 401));
+	}
+});
+
+export const resetPassword = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const { token, newPassword } = req.body as IResetPasswordRequest;
+
+		// Token'ı doğrula
+		const decoded = jwt.verify(token, process.env.RESET_TOKEN_SECRET as string) as JwtPayload;
+
+
+
+
+		// Kullanıcıyı bul
+		const user = await userModel.findById(decoded.id);
+		if (!user) {
+			return next(new ErrorHandler('Kullanıcı bulunamadı', 404));
+		}
+
+		// Yeni şifreyi güncelle
+		user.password = newPassword;
+		await user.save();
+
+		res.status(200).json({
+			success: true,
+			message: 'Şifreniz başarıyla güncellendi'
+		});
+
+	} catch (error: any) {
+		if (error.name === 'JsonWebTokenError') {
+			return next(new ErrorHandler('Geçersiz token', 401));
+		}
+		if (error.name === 'TokenExpiredError') {
+			return next(new ErrorHandler('Token süresi dolmuş', 401));
+		}
+		return next(new ErrorHandler(error.message, 400));
 	}
 });
