@@ -16,6 +16,7 @@ export interface IUser extends Document {
     };
     role: string;
     isVerified: boolean;
+    resetPasswordToken: string | null;
     comparePassword: (password: string) => Promise<boolean>;
     SignAccessToken: () => string;
     SignRefreshToken: () => string;
@@ -51,6 +52,10 @@ const userSchema: Schema<IUser> = new Schema({
     },
     role: { type: String, default: 'user' },
     isVerified: { type: Boolean, default: false },
+    resetPasswordToken: {
+        type: String,
+        default: null
+    }
 }, { timestamps: true })
 
 
