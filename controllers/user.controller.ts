@@ -10,6 +10,7 @@ import { deleteUserService, getAllUsersService, getUserById, updateUserRoleServi
 import cloudinary from 'cloudinary';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
+import { verifyGoogleToken } from '../utils/googleAuth';
 
 interface IRegistrationBody {
 	name: string;
@@ -689,5 +690,43 @@ export const resetPassword = CatcAsyncError(async (req: Request, res: Response, 
 			success: false,
 			message: 'Geçersiz veya süresi dolmuş token'
 		});
+	}
+});
+
+export const googleLogin = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const { email, name, picture, platform } = req.body;
+
+		if (!email || !name || !platform) {
+			return next(new ErrorHandler("Missing required fields", 400));
+		}
+
+		// Kullanıcıyı veritabanında ara veya oluştur
+		let user = await userModel.findOne({ email });
+
+		if (!user) {
+			user = await userModel.create({
+				name,
+				email,
+				avatar: {
+					url: picture
+				},
+				isVerified: true
+			});
+		}
+
+		// Token oluştur
+		const { accessToken } = signAccessToken(user, 200, res);
+
+		// Response'u normal login ile aynı formatta gönder
+		res.status(200).json({
+			success: true,
+			user,
+			accessToken
+		});
+
+	} catch (error: any) {
+		console.error('Google login error:', error);
+		return next(new ErrorHandler(error.message, 400));
 	}
 });

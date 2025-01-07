@@ -1,5 +1,5 @@
 import express from 'express';
-import { activationUser, deleteUser, getAllUsers, getUserInfo, loginUser, logoutUser, registrationUser, socialAuth, updateUserAvatar, updateUserInfo, updateUserPassword, updateUserRole, updateUserToken, requestPasswordReset, verifyResetToken, resetPassword } from '../controllers/user.controller';
+import { activationUser, deleteUser, getAllUsers, getUserInfo, loginUser, logoutUser, registrationUser, socialAuth, updateUserAvatar, updateUserInfo, updateUserPassword, updateUserRole, updateUserToken, requestPasswordReset, verifyResetToken, resetPassword, googleLogin } from '../controllers/user.controller';
 import { isAuthenticated, validateUserRole } from '../middleware/auth';
 
 const userRouter = express.Router();
@@ -35,5 +35,7 @@ userRouter.post('/request-password-reset', requestPasswordReset);
 userRouter.get('/verify-reset-token/:token', verifyResetToken); // Token doğrulama route'u
 
 userRouter.post('/reset-password', resetPassword);
+
+userRouter.post("/google-login", googleLogin);
 
 export default userRouter;

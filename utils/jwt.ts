@@ -31,21 +31,21 @@ export const refreshTokenOptions: ITokenOptions = {
 }
 
 export const signAccessToken = (user: IUser, statusCode: number, res: Response) => {
-    const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN as string, {
-        expiresIn: '5m',
-    });
+    const accessToken = jwt.sign(
+        { id: user._id },
+        process.env.ACCESS_TOKEN as string,
+        { expiresIn: '5m' }
+    );
 
-    const refreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN as string, {
-        expiresIn: '3d',
-    });
-
-    // Add proper type assertion for Redis
+    const refreshToken = jwt.sign(
+        { id: user._id },
+        process.env.REFRESH_TOKEN as string,
+        { expiresIn: '3d' }
+    );
     redis.set(user._id, JSON.stringify(user as Record<string, any>));
-
     // Cookie'leri ayarla
     res.cookie('access_token', accessToken, accessTokenOptions);
     res.cookie('refresh_token', refreshToken, refreshTokenOptions);
 
-    // Sadece token'ları döndür, response'u gönderme
     return { accessToken, refreshToken };
-}
+};
