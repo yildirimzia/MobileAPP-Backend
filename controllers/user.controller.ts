@@ -653,9 +653,6 @@ export const resetPassword = CatcAsyncError(async (req: Request, res: Response, 
 		// Token'ı doğrula
 		const decoded = jwt.verify(token, process.env.RESET_TOKEN_SECRET as string) as JwtPayload;
 
-
-
-
 		// Kullanıcıyı bul
 		const user = await userModel.findById(decoded.id);
 		if (!user) {
