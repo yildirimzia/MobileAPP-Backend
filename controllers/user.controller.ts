@@ -8,9 +8,6 @@ import { accessTokenOptions, refreshTokenOptions, signAccessToken } from '../uti
 import { redis } from '../utils/redis';
 import { deleteUserService, getAllUsersService, getUserById, updateUserRoleService } from '../services/user.service';
 import cloudinary from 'cloudinary';
-import { v4 as uuidv4 } from 'uuid';
-import bcrypt from 'bcryptjs';
-import { verifyGoogleToken } from '../utils/googleAuth';
 
 interface IRegistrationBody {
 	name: string;
