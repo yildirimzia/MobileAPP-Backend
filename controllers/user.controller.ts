@@ -9,6 +9,7 @@ import { redis } from '../utils/redis';
 import { deleteUserService, getAllUsersService, getUserById, updateUserRoleService } from '../services/user.service';
 import cloudinary from 'cloudinary';
 import { v4 as uuidv4 } from 'uuid';
+import bcrypt from 'bcryptjs';
 
 interface IRegistrationBody {
 	name: string;
@@ -573,7 +574,6 @@ export const deleteUser = CatcAsyncError(async (req: Request, res: Response, nex
 export const requestPasswordReset = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
 	const { email } = req.body;
 
-	// E-posta adresinin veritabanında kayıtlı olup olmadığını kontrol et
 	const user = await userModel.findOne({ email });
 
 	if (!user) {
@@ -583,17 +583,10 @@ export const requestPasswordReset = CatcAsyncError(async (req: Request, res: Res
 	// Şifre sıfırlama token'ı oluştur
 	const resetToken = createResetToken(user);
 
-	// Token'ı cookie olarak ayarla
-	const cookieOptions = {
-		httpOnly: true,
-		secure: false, // Yerel ortamda güvenli cookie'yi devre dışı bırak
-		sameSite: 'lax' as 'lax', // Cookie'nin aynı site politikası
-		expires: new Date(Date.now() + 5 * 60 * 1000) // 5 dakika geçerlilik süresi
-	};
+	// Token'ı kullanıcıya kaydet
+	user.resetPasswordToken = resetToken;
+	await user.save();
 
-	res.cookie('reset_token', resetToken, cookieOptions);
-
-	// E-posta gönder
 	try {
 		await sendMail({
 			email: user.email,
@@ -610,6 +603,9 @@ export const requestPasswordReset = CatcAsyncError(async (req: Request, res: Res
 			message: 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.'
 		});
 	} catch (error: any) {
+		// Hata durumunda token'ı temizle
+		user.resetPasswordToken = null;
+		await user.save();
 		return next(new ErrorHandler(error.message, 400));
 	}
 });
@@ -635,7 +631,10 @@ export const verifyResetToken = CatcAsyncError(async (req: Request, res: Respons
 	const { token } = req.params; // Token'ı URL parametresi olarak al
 
 	try {
-		const decoded = jwt.verify(token, process.env.RESET_TOKEN_SECRET as string) as JwtPayload; // Token'ı doğrula
+		const decoded = jwt.verify(
+			token,
+			process.env.RESET_TOKEN_SECRET as string
+		) as JwtPayload; // Token'ı doğrula
 		res.status(200).json({
 			success: true,
 			message: 'Token geçerli',
@@ -651,30 +650,44 @@ export const resetPassword = CatcAsyncError(async (req: Request, res: Response, 
 		const { token, newPassword } = req.body as IResetPasswordRequest;
 
 		// Token'ı doğrula
-		const decoded = jwt.verify(token, process.env.RESET_TOKEN_SECRET as string) as JwtPayload;
+		const decoded = jwt.verify(
+			token,
+			process.env.RESET_TOKEN_SECRET as string
+		) as JwtPayload;
 
-		// Kullanıcıyı bul
-		const user = await userModel.findById(decoded.id);
+		// User'ı password field'ı ile birlikte getir
+		const user = await userModel.findById(decoded.id).select('+password');
+
 		if (!user) {
-			return next(new ErrorHandler('Kullanıcı bulunamadı', 404));
+			return res.status(400).json({
+				success: false,
+				message: 'Geçersiz veya süresi dolmuş token'
+			});
 		}
 
-		// Yeni şifreyi güncelle
+		// Token kullanılmış mı veya geçerli mi kontrol et
+		if (!user.resetPasswordToken || user.resetPasswordToken !== token) {
+			return res.status(400).json({
+				success: false,
+				message: 'Bu şifre sıfırlama bağlantısı daha önce kullanılmış veya geçersiz'
+			});
+		}
+
+		// Şifreyi güncelle
 		user.password = newPassword;
+
+		// Token'ı geçersiz kıl
+		user.resetPasswordToken = null;
 		await user.save();
 
-		res.status(200).json({
+		return res.json({
 			success: true,
 			message: 'Şifreniz başarıyla güncellendi'
 		});
-
-	} catch (error: any) {
-		if (error.name === 'JsonWebTokenError') {
-			return next(new ErrorHandler('Geçersiz token', 401));
-		}
-		if (error.name === 'TokenExpiredError') {
-			return next(new ErrorHandler('Token süresi dolmuş', 401));
-		}
-		return next(new ErrorHandler(error.message, 400));
+	} catch (error) {
+		return res.status(400).json({
+			success: false,
+			message: 'Geçersiz veya süresi dolmuş token'
+		});
 	}
 });
