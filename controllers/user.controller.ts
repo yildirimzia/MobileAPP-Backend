@@ -8,6 +8,7 @@ import { accessTokenOptions, refreshTokenOptions, signAccessToken } from '../uti
 import { redis } from '../utils/redis';
 import { deleteUserService, getAllUsersService, getUserById, updateUserRoleService } from '../services/user.service';
 import cloudinary from 'cloudinary';
+import activationModel from '../models/activation.model';
 
 interface IRegistrationBody {
 	name: string;
@@ -26,12 +27,44 @@ export const registrationUser = CatcAsyncError(async (req: Request, res: Respons
 	try {
 		const { name, email, password } = req.body;
 
-		const isEmailExist = await userModel.findOne({ email });
+		// Önce aktif kullanıcı var mı kontrol et
+		const existingUser = await userModel.findOne({
+			email,
+			isVerified: true
+		});
 
-		if (isEmailExist) {
+		if (existingUser) {
 			return next(new ErrorHandler('Bu e-posta adresi zaten kullanılıyor', 400));
 		}
 
+		// Aktif doğrulama kodu var mı kontrol et
+		const activeCode = await activationModel.findOne({
+			email,
+			expiresAt: { $gt: new Date() }
+		});
+
+		if (activeCode) {
+			// Son gönderimden bu yana 2 dakika geçmediyse engelle
+			const timeSinceLastResend = Date.now() - activeCode.lastResendAt.getTime();
+			const remainingTime = Math.ceil((120000 - timeSinceLastResend) / 1000);
+
+			if (timeSinceLastResend < 120000) { // 2 dakika
+				return res.status(400).json({
+					success: false,
+					message: 'Bu email için aktif bir doğrulama kodu bulunmaktadır.',
+					activationToken: activeCode.activationToken,
+					remainingTime: remainingTime > 0 ? remainingTime : 0
+				});
+			}
+
+			return res.status(400).json({
+				success: false,
+				message: 'Bu e-posta adresi için aktif bir doğrulama kodu bulunmaktadır. Lütfen mailinizi kontrol edin.',
+				activationToken: activeCode.activationToken
+			});
+		}
+
+		// Yeni aktivasyon kodu oluştur
 		const user: IRegistrationBody = {
 			name,
 			email,
@@ -41,39 +74,33 @@ export const registrationUser = CatcAsyncError(async (req: Request, res: Respons
 		const activationToken = createActivationToken(user);
 		const activationCode = activationToken.activationCode;
 
-		const data = {
-			user: {
-				name: user.name,
-			},
-			activationCode
-		}
+		// Aktivasyon bilgilerini kaydet
+		await activationModel.create({
+			email: user.email,
+			activationToken: activationToken.token,
+			activationCode: activationCode,
+			expiresAt: new Date(Date.now() + 120000), // 2 dakika
+			lastResendAt: new Date() // lastResendAt alanını ekledik
+		});
 
+		// Mail gönder
+		await sendMail({
+			email: user.email,
+			subject: 'Hesabınızı Aktifleştirmek İçin Aktivasyon Kodunu Kullanın',
+			template: 'activation-mail.ejs',
+			data: {
+				user: { name: user.name },
+				activationCode
+			}
+		});
 
-		try {
-			await sendMail({
-				email: user.email,
-				subject: 'Hesabınızı Aktifleştirmek İçin Aktivasyon Kodunu Kullanın',
-				template: 'activation-mail.ejs',
-				data: {
-					user: {
-						name: user.name
-					},
-					activationCode
-				}
-			});
+		res.status(201).json({
+			success: true,
+			message: `Hesabınızı etkinleştirmek için lütfen e-postanızı kontrol edin: ${user.email}`,
+			activationToken: activationToken.token
+		});
 
-			res.status(201).json({
-				success: true,
-				message: `Hesabınızı etkinleştirmek için lütfen e-postanızı kontrol edin: ${user.email}`,
-				activationToken: activationToken.token
-			});
-
-		} catch (error: any) {
-			return next(new ErrorHandler(error.message, 400));
-		}
-
-	}
-	catch (error: any) {
+	} catch (error: any) {
 		return next(new ErrorHandler(error.message, 400));
 	}
 })
@@ -109,32 +136,48 @@ export const activationUser = CatcAsyncError(async (req: Request, res: Response,
 	try {
 		const { activation_token, activation_code } = req.body;
 
+		// Önce kullanıcının zaten aktif olup olmadığını kontrol et
 		const decoded = jwt.verify(
 			activation_token,
 			process.env.ACTIVATION_SECRET as string
 		) as { user: IRegistrationBody, activationCode: string };
 
-		if (!decoded.user || !decoded.activationCode) {
-			return next(new ErrorHandler('Geçersiz token formatı', 400));
-		}
-
-		if (decoded.activationCode !== activation_code) {
-			return next(new ErrorHandler('Geçersiz aktivasyon kodu', 400));
-		}
-
-		const { name, email, password } = decoded.user;
-
-		const existUser = await userModel.findOne({ email });
-
-		if (existUser) {
-			return next(new ErrorHandler('Bu e-posta adresi zaten kullanılıyor', 400));
-		}
-
-		const user = await userModel.create({
-			name,
-			email,
-			password,
+		const existingUser = await userModel.findOne({
+			email: decoded.user.email,
+			isVerified: true
 		});
+
+		if (existingUser) {
+			return res.status(200).json({
+				success: true,
+				message: 'Kullanıcı zaten aktif',
+				isAlreadyActive: true,
+				user: existingUser
+			});
+		}
+
+		// Aktivasyon kaydını bul
+		const activation = await activationModel.findOne({
+			activationToken: activation_token,
+			activationCode: activation_code,
+			expiresAt: { $gt: new Date() }
+		});
+
+		if (!activation) {
+			return next(new ErrorHandler('Geçersiz veya süresi dolmuş aktivasyon kodu', 400));
+		}
+
+		// Kullanıcıyı oluştur
+		const user = await userModel.create({
+			name: decoded.user.name,
+			email: decoded.user.email,
+			password: decoded.user.password,
+			isVerified: true,
+			role: 'user'
+		});
+
+		// Aktivasyon kaydını sil
+		await activation.deleteOne();
 
 		res.status(201).json({
 			success: true,
