@@ -86,13 +86,12 @@ interface IActivationToken {
 const createActivationToken = (user: IRegistrationBody): IActivationToken => {
 	const activationCode = Math.floor(1000 + Math.random() * 9000).toString();
 
-	// Debug için payload'ı kontrol edelim
 	const payload = { user, activationCode };
 
 	const token = jwt.sign(
 		payload,
 		process.env.ACTIVATION_SECRET as string,
-		{ expiresIn: "5m" }
+		{ expiresIn: "120s" }
 	);
 
 	return { token, activationCode };
@@ -108,13 +107,12 @@ interface IActivationRequest {
 
 export const activationUser = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		const { activation_token, activation_code } = req.body as IActivationRequest;
+		const { activation_token, activation_code } = req.body;
 
 		const decoded = jwt.verify(
 			activation_token,
 			process.env.ACTIVATION_SECRET as string
 		) as { user: IRegistrationBody, activationCode: string };
-
 
 		if (!decoded.user || !decoded.activationCode) {
 			return next(new ErrorHandler('Geçersiz token formatı', 400));
@@ -129,7 +127,7 @@ export const activationUser = CatcAsyncError(async (req: Request, res: Response,
 		const existUser = await userModel.findOne({ email });
 
 		if (existUser) {
-			return next(new ErrorHandler('Kullanıcı zaten mevcut', 400));
+			return next(new ErrorHandler('Bu e-posta adresi zaten kullanılıyor', 400));
 		}
 
 		const user = await userModel.create({
@@ -143,7 +141,6 @@ export const activationUser = CatcAsyncError(async (req: Request, res: Response,
 			message: 'Kullanıcı başarıyla oluşturuldu',
 			user
 		});
-
 
 	} catch (error: any) {
 		return next(new ErrorHandler(error.message, 400));
