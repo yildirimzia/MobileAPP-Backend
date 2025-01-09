@@ -20,6 +20,15 @@ export interface IUser extends Document {
     comparePassword: (password: string) => Promise<boolean>;
     SignAccessToken: () => string;
     SignRefreshToken: () => string;
+    gender: 'male' | 'female' | 'not_specified';
+}
+
+export interface IRegistrationBody {
+    name: string;
+    email: string;
+    password: string;
+    avatar?: string;
+    gender: 'male' | 'female' | 'not_specified';
 }
 
 
@@ -54,6 +63,11 @@ const userSchema: Schema<IUser> = new Schema({
     resetPasswordToken: {
         type: String,
         default: null
+    },
+    gender: {
+        type: String,
+        enum: ['male', 'female', 'not_specified'],
+        default: 'not_specified'
     }
 }, { timestamps: true })
 

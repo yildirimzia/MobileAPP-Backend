@@ -8,24 +8,27 @@ import { accessTokenOptions, refreshTokenOptions, signAccessToken } from '../uti
 import { redis } from '../utils/redis';
 import { deleteUserService, getAllUsersService, getUserById, updateUserRoleService } from '../services/user.service';
 import cloudinary from 'cloudinary';
-import activationModel from '../models/activation.model';
-
-interface IRegistrationBody {
-	name: string;
-	email: string;
-	password: string;
-	avatar?: string;
-}
+import activationModel, { IActivation } from '../models/activation.model';
+import { IRegistrationBody } from '../models/user.model';
 
 interface IResetPasswordRequest {
 	token: string;
 	newPassword: string;
 }
-
+enum Gender {
+	male = 'male',
+	female = 'female',
+	not_specified = 'not_specified',
+}
 //registration start
-export const registrationUser = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+export const registrationUser = CatcAsyncError(async (req: Request<{}, {}, IRegistrationBody>, res: Response, next: NextFunction) => {
 	try {
-		const { name, email, password } = req.body;
+		// Önce süresi dolmuş kayıtları temizle
+		await activationModel.deleteMany({
+			expiresAt: { $lt: new Date() }
+		});
+
+		const { name, email, password, gender } = req.body as IRegistrationBody;
 
 		// Önce aktif kullanıcı var mı kontrol et
 		const existingUser = await userModel.findOne({
@@ -37,11 +40,17 @@ export const registrationUser = CatcAsyncError(async (req: Request, res: Respons
 			return next(new ErrorHandler('Bu e-posta adresi zaten kullanılıyor', 400));
 		}
 
+		// Süresi dolmuş eski aktivasyon kayıtlarını temizle
+		await activationModel.deleteMany({
+			email,
+			expiresAt: { $lt: new Date() }
+		});
+
 		// Aktif doğrulama kodu var mı kontrol et
-		const activeCode = await activationModel.findOne({
+		const activeCode = await activationModel.findOne<IActivation>({
 			email,
 			expiresAt: { $gt: new Date() }
-		});
+		}).lean();
 
 		if (activeCode) {
 			// Son gönderimden bu yana 2 dakika geçmediyse engelle
@@ -53,6 +62,7 @@ export const registrationUser = CatcAsyncError(async (req: Request, res: Respons
 					success: false,
 					message: 'Bu email için aktif bir doğrulama kodu bulunmaktadır.',
 					activationToken: activeCode.activationToken,
+					gender: activeCode.gender,
 					remainingTime: remainingTime > 0 ? remainingTime : 0
 				});
 			}
@@ -60,7 +70,8 @@ export const registrationUser = CatcAsyncError(async (req: Request, res: Respons
 			return res.status(400).json({
 				success: false,
 				message: 'Bu e-posta adresi için aktif bir doğrulama kodu bulunmaktadır. Lütfen mailinizi kontrol edin.',
-				activationToken: activeCode.activationToken
+				activationToken: activeCode.activationToken,
+				gender: activeCode.gender
 			});
 		}
 
@@ -69,6 +80,7 @@ export const registrationUser = CatcAsyncError(async (req: Request, res: Respons
 			name,
 			email,
 			password,
+			gender: Gender[gender]
 		}
 
 		const activationToken = createActivationToken(user);
@@ -79,8 +91,9 @@ export const registrationUser = CatcAsyncError(async (req: Request, res: Respons
 			email: user.email,
 			activationToken: activationToken.token,
 			activationCode: activationCode,
-			expiresAt: new Date(Date.now() + 120000), // 2 dakika
-			lastResendAt: new Date() // lastResendAt alanını ekledik
+			expiresAt: new Date(Date.now() + 120000),
+			lastResendAt: new Date(),
+			gender: user.gender
 		});
 
 		// Mail gönder
@@ -96,7 +109,7 @@ export const registrationUser = CatcAsyncError(async (req: Request, res: Respons
 
 		res.status(201).json({
 			success: true,
-			message: `Hesabınızı etkinleştirmek için lütfen e-postanızı kontrol edin: ${user.email}`,
+			message: `Hesabınızı etkinleştirmek için lütfen e-postanızı kontrol edin`,
 			activationToken: activationToken.token
 		});
 
@@ -172,6 +185,7 @@ export const activationUser = CatcAsyncError(async (req: Request, res: Response,
 			name: decoded.user.name,
 			email: decoded.user.email,
 			password: decoded.user.password,
+			gender: decoded.user.gender || 'not_specified',
 			isVerified: true,
 			role: 'user'
 		});

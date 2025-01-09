@@ -1,14 +1,24 @@
 import mongoose, { Document, Model, Schema } from 'mongoose';
 
-export interface IActivation extends Document {
+interface IActivationDocument extends Document {
     email: string;
     activationToken: string;
     activationCode: string;
     expiresAt: Date;
     lastResendAt: Date;
+    gender: 'male' | 'female' | 'not_specified';
 }
 
-const activationSchema: Schema<IActivation> = new Schema({
+export interface IActivation {
+    email: string;
+    activationToken: string;
+    activationCode: string;
+    expiresAt: Date;
+    lastResendAt: Date;
+    gender: 'male' | 'female' | 'not_specified';
+}
+
+const activationSchema = new Schema<IActivationDocument>({
     email: {
         type: String,
         required: true,
@@ -29,8 +39,13 @@ const activationSchema: Schema<IActivation> = new Schema({
     lastResendAt: {
         type: Date,
         required: true
+    },
+    gender: {
+        type: String,
+        enum: ['male', 'female', 'not_specified'] as const,
+        default: 'not_specified'
     }
 });
 
-const Activation: Model<IActivation> = mongoose.model('Activation', activationSchema);
+const Activation: Model<IActivationDocument> = mongoose.model('Activation', activationSchema);
 export default Activation; 
