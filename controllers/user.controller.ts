@@ -179,10 +179,14 @@ export const activationUser = CatcAsyncError(async (req: Request, res: Response,
 		// Aktivasyon kaydını sil
 		await activation.deleteOne();
 
+		// Token oluştur ve response'a ekle
+		const { accessToken } = signAccessToken(user, 200, res);
+
 		res.status(201).json({
 			success: true,
 			message: 'Kullanıcı başarıyla oluşturuldu',
-			user
+			user,
+			accessToken
 		});
 
 	} catch (error: any) {
