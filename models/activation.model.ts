@@ -8,6 +8,7 @@ interface IActivationDocument extends Document {
     email: string;
     expiresAt: Date;
     lastResendAt: Date;
+    gender?: string;
     data: any;
 }
 
@@ -19,6 +20,7 @@ export interface IActivation {
     email: string;
     expiresAt: Date;
     lastResendAt: Date;
+    gender?: string;
     data: any;
 }
 
