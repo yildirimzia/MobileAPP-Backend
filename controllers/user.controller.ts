@@ -89,16 +89,16 @@ export const registrationUser = CatcAsyncError(async (req: Request<{}, {}, IRegi
 
 		// Aktivasyon bilgilerini kaydet
 		await activationModel.create({
-			userId: user._id || new mongoose.Types.ObjectId(),
+			userId: new mongoose.Types.ObjectId(),
 			email: user.email,
 			type: 'registration',
 			code: activationCode,
 			activationToken: activationToken.token,
+			gender: user.gender,
 			expiresAt: new Date(Date.now() + 120000),
 			lastResendAt: new Date(),
 			data: {
-				name: user.name,
-				gender: user.gender
+				name: user.name
 			}
 		});
 
@@ -802,6 +802,20 @@ export const requestEmailChange = CatcAsyncError(async (req: Request, res: Respo
 			return next(new ErrorHandler('Bu e-posta adresi zaten kullanımda', 400));
 		}
 
+		// Kullanıcının eski aktivasyon kayıtlarını temizle
+		await activationModel.deleteMany({
+			userId: user._id,
+			type: 'email_change',
+			expiresAt: { $lt: new Date() }
+		});
+
+		// Aktif kayıtları da temizle
+		await activationModel.deleteMany({
+			userId: user._id,
+			type: 'email_change'
+		});
+
+		// Sonra yeni aktivasyon kodunu oluştur
 		const activationCode = Math.floor(1000 + Math.random() * 9000).toString();
 
 		const activation = await activationModel.create({
@@ -809,7 +823,7 @@ export const requestEmailChange = CatcAsyncError(async (req: Request, res: Respo
 			type: 'email_change',
 			code: activationCode,
 			email: newEmail,
-			expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+			expiresAt: new Date(Date.now() + 2 * 60 * 1000),  // 2 dakika
 			lastResendAt: new Date(),
 			data: { currentEmail: user.email }
 		});

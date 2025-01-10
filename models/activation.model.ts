@@ -6,9 +6,9 @@ interface IActivationDocument extends Document {
     code: string;
     activationToken: string;
     email: string;
+    gender: 'male' | 'female' | 'not_specified';
     expiresAt: Date;
     lastResendAt: Date;
-    gender?: string;
     data: any;
 }
 
@@ -18,9 +18,9 @@ export interface IActivation {
     code: string;
     activationToken: string;
     email: string;
+    gender: 'male' | 'female' | 'not_specified';
     expiresAt: Date;
     lastResendAt: Date;
-    gender?: string;
     data: any;
 }
 
@@ -48,6 +48,11 @@ const activationSchema = new Schema<IActivationDocument>({
     email: {
         type: String,
         required: true
+    },
+    gender: {
+        type: String,
+        enum: ['male', 'female', 'not_specified'],
+        default: 'not_specified'
     },
     expiresAt: {
         type: Date,

@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import ErrorMiddleware from './middleware/error';
 import userRouter from './routes/user.route';
+import { setupCleanupJobs } from './utils/cleanup';
 
 dotenv.config();
 
@@ -58,5 +59,8 @@ app.all('*', (req: Request, res: Response, next: NextFunction) => {
 
 // Error handling middleware - should be last
 app.use(ErrorMiddleware);
+
+// Cleanup jobs'ı başlat
+setupCleanupJobs();
 
 export default app;

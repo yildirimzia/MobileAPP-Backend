@@ -7,9 +7,11 @@ export const setupCleanupJobs = () => {
     // Her gün gece yarısı çalışacak
     cron.schedule('0 0 * * *', async () => {
         try {
-            // Aktivasyon kodlarını temizle
+            // 24 saatten eski kayıtları sil
+            const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
             await activationModel.deleteMany({
-                expiresAt: { $lt: new Date() }
+                expiresAt: { $lt: oneDayAgo }
             });
 
             // Süresi dolmuş şifre sıfırlama tokenlarını temizle
