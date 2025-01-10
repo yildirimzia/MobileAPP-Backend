@@ -71,8 +71,6 @@ const userSchema: Schema<IUser> = new Schema({
     }
 }, { timestamps: true })
 
-userSchema.index({ name: 1 }, { unique: false });
-
 userSchema.methods.comparePassword = async function (enteredPassword: string): Promise<boolean> {
     return await bcrypt.compare(enteredPassword, this.password);
 };

@@ -411,29 +411,30 @@ export const socialAuth = CatcAsyncError(async (req: Request, res: Response, nex
 interface IUpdateUserRequest {
 	name: string;
 	email: string;
+	gender: string;
 }
 
 export const updateUserInfo = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		const { name, email } = req.body as IUpdateUserRequest;
+		const { name, gender } = req.body;
+		const userId = req.user?._id;
 
-		const userId = req?.user?._id;
 		const user = await userModel.findById(userId);
 
-		if (email && user) {
-			const isEmailExist = await userModel.findOne({ email });
-			if (isEmailExist) {
-				return next(new ErrorHandler('Bu e-posta adresi zaten kullanılıyor. Lütfen farklı bir e-posta adresi deneyin veya hesabınıza giriş yapmayı deneyin', 400));
-			}
-			user.email = email;
+		if (!user) {
+			return next(new ErrorHandler('Kullanıcı bulunamadı', 400));
 		}
 
-		if (name && user) {
+		// Sadece gönderilen alanları güncelle
+		if (name) {
 			user.name = name;
 		}
 
-		await user?.save();
+		if (gender) {
+			user.gender = gender as "male" | "female" | "not_specified";
+		}
 
+		await user.save();
 		await redis.set(userId, JSON.stringify(user));
 
 		res.status(200).json({
@@ -445,7 +446,7 @@ export const updateUserInfo = CatcAsyncError(async (req: Request, res: Response,
 	catch (error: any) {
 		return next(new ErrorHandler(error.message, 400));
 	}
-})
+});
 
 // End of Update User Info
 
