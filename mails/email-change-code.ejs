@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>E-posta Değişikliği Aktivasyon Kodu</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f4f4f4;
+        }
+
+        .content {
+            padding: 20px 0;
+        }
+
+        .code {
+            text-align: center;
+            font-size: 32px;
+            font-weight: bold;
+            color: #2196F3;
+            padding: 20px;
+            margin: 20px 0;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .footer {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 2px solid #f4f4f4;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>E-posta Değişikliği Aktivasyon Kodu</h2>
+        </div>
+        <div class="content">
+            <p>Merhaba <%= user.name %>,</p>
+            <p>E-posta adresinizi değiştirmek için aşağıdaki aktivasyon kodunu kullanın:</p>
+
+            <div class="code">
+                <%= activationCode %>
+            </div>
+
+            <p>Bu kod 5 dakika süreyle geçerlidir.</p>
+            <p>Eğer bu işlemi siz yapmadıysanız, lütfen bu e-postayı dikkate almayın.</p>
+        </div>
+        <div class="footer">
+            <p>Bu otomatik olarak gönderilen bir e-postadır, lütfen yanıtlamayın.</p>
+        </div>
+    </div>
+</body>
+
+</html>

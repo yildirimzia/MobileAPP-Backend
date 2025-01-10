@@ -1,51 +1,66 @@
 import mongoose, { Document, Model, Schema } from 'mongoose';
 
 interface IActivationDocument extends Document {
-    email: string;
+    userId: mongoose.Types.ObjectId;
+    type: 'registration' | 'email_change' | 'password_reset';
+    code: string;
     activationToken: string;
-    activationCode: string;
+    email: string;
     expiresAt: Date;
     lastResendAt: Date;
-    gender: 'male' | 'female' | 'not_specified';
+    data: any;
 }
 
 export interface IActivation {
-    email: string;
+    userId: mongoose.Types.ObjectId;
+    type: 'registration' | 'email_change' | 'password_reset';
+    code: string;
     activationToken: string;
-    activationCode: string;
+    email: string;
     expiresAt: Date;
     lastResendAt: Date;
-    gender: 'male' | 'female' | 'not_specified';
+    data: any;
 }
 
 const activationSchema = new Schema<IActivationDocument>({
-    email: {
+    userId: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    type: {
         type: String,
         required: true,
+        enum: ['registration', 'email_change', 'password_reset']
+    },
+    code: {
+        type: String,
+        required: true
     },
     activationToken: {
         type: String,
-        required: true,
+        required: function (this: IActivationDocument) {
+            return this.type === 'registration';
+        }
     },
-    activationCode: {
+    email: {
         type: String,
-        required: true,
+        required: true
     },
     expiresAt: {
         type: Date,
-        required: true,
-        expires: 120
+        required: true
     },
     lastResendAt: {
         type: Date,
-        required: true
+        required: true,
+        default: Date.now
     },
-    gender: {
-        type: String,
-        enum: ['male', 'female', 'not_specified'] as const,
-        default: 'not_specified'
+    data: {
+        type: Schema.Types.Mixed,
+        default: {}
     }
 });
 
-const Activation: Model<IActivationDocument> = mongoose.model('Activation', activationSchema);
+const Activation = mongoose.model<IActivationDocument>('Activation', activationSchema);
 export default Activation; 
