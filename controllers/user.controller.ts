@@ -31,6 +31,7 @@ export const registrationUser = CatcAsyncError(async (req: Request<{}, {}, IRegi
 
 		const { name, email, password, gender } = req.body as IRegistrationBody;
 
+
 		// Önce aktif kullanıcı var mı kontrol et
 		const existingUser = await userModel.findOne({
 			email,
@@ -860,12 +861,11 @@ export const verifyEmailChange = CatcAsyncError(async (req: Request, res: Respon
 		const activation = await activationModel.findOne({
 			userId,
 			email: newEmail,
-			code: activationCode,
 			type: 'email_change',
 			expiresAt: { $gt: new Date() }
 		});
 
-		if (!activation) {
+		if (!activation || !(await activation.compareCode(activationCode))) {
 			return next(new ErrorHandler('Geçersiz veya süresi dolmuş aktivasyon kodu', 400));
 		}
 
@@ -882,7 +882,7 @@ export const verifyEmailChange = CatcAsyncError(async (req: Request, res: Respon
 		}
 
 		// Aktivasyon kaydını sil
-		await activation.deleteOne();
+		await activationModel.deleteOne({ _id: activation._id });
 
 		res.status(200).json({
 			success: true,

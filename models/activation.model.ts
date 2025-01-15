@@ -1,4 +1,5 @@
 import mongoose, { Document, Model, Schema } from 'mongoose';
+import crypto from 'crypto';
 
 interface IActivationDocument extends Document {
     userId: mongoose.Types.ObjectId;
@@ -10,6 +11,8 @@ interface IActivationDocument extends Document {
     expiresAt: Date;
     lastResendAt: Date;
     data: any;
+    codeHash: string;
+    compareCode(code: string): Promise<boolean>;
 }
 
 export interface IActivation {
@@ -22,7 +25,16 @@ export interface IActivation {
     expiresAt: Date;
     lastResendAt: Date;
     data: any;
+    codeHash: string;
+    compareCode: (code: string) => Promise<boolean>;
 }
+
+const hashCode = (code: string): string => {
+    return crypto
+        .createHash('sha256')
+        .update(code + process.env.ACTIVATION_SECRET)
+        .digest('hex');
+};
 
 const activationSchema = new Schema<IActivationDocument>({
     userId: {
@@ -37,7 +49,11 @@ const activationSchema = new Schema<IActivationDocument>({
     },
     code: {
         type: String,
-        required: true
+        required: true,
+        select: false
+    },
+    codeHash: {
+        type: String
     },
     activationToken: {
         type: String,
@@ -68,6 +84,17 @@ const activationSchema = new Schema<IActivationDocument>({
         default: {}
     }
 });
+
+activationSchema.pre('save', async function (next) {
+    if (this.isModified('code')) {
+        this.codeHash = hashCode(this.code);
+    }
+    next();
+});
+
+activationSchema.methods.compareCode = async function (code: string): Promise<boolean> {
+    return hashCode(code) === this.codeHash;
+};
 
 const Activation = mongoose.model<IActivationDocument>('Activation', activationSchema);
 export default Activation; 
