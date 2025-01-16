@@ -63,3 +63,25 @@ export const getBabies = CatcAsyncError(async (req: Request, res: Response, next
         return next(new ErrorHandler(error.message, 400));
     }
 });
+
+export const getBabyById = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    const baby = await Baby.findById(req.params.id);
+    if (!baby) {
+        return next(new ErrorHandler('Bebek bulunamadı', 404));
+    }
+    res.json({ success: true, baby });
+});
+
+export const deleteBaby = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const baby = await Baby.findOne({ _id: id, parent: userId });
+
+    if (!baby) {
+        return next(new ErrorHandler('Bebek bulunamadı veya bu işlem için yetkiniz yok', 404));
+    }
+
+    await Baby.findByIdAndDelete(id);
+    res.json({ success: true, message: 'Bebek başarıyla silindi' });
+});
