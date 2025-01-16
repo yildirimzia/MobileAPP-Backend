@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import ErrorMiddleware from './middleware/error';
 import userRouter from './routes/user.route';
+import babyRouter from './routes/baby.route';
 import { setupCleanupJobs } from './utils/cleanup';
 
 dotenv.config();
@@ -41,6 +42,7 @@ app.use(express.json({ limit: '50mb' }));
 
 // Routes
 app.use('/api/v1', userRouter);
+app.use('/api/v1', babyRouter);
 
 // Test route
 app.get('/test', (req: Request, res: Response, next: NextFunction) => {
