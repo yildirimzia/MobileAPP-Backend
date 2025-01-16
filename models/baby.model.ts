@@ -16,6 +16,11 @@ export interface IBaby extends Document {
         vaccine_date: Date;
         vaccine_notes?: string;
     }[];
+    allergy_information?: {
+        allergy_name: string;
+        discovery_date: Date;
+        symptoms?: string;
+    }[];
 }
 
 const babySchema: Schema<IBaby> = new Schema({
@@ -52,6 +57,11 @@ const babySchema: Schema<IBaby> = new Schema({
         vaccine_name: { type: String, required: true },
         vaccine_date: { type: Date, required: true },
         vaccine_notes: String
+    }],
+    allergy_information: [{
+        allergy_name: { type: String, required: true },
+        discovery_date: { type: Date, required: true },
+        symptoms: String
     }]
 }, { timestamps: true });
 

@@ -53,7 +53,7 @@ export const getBabies = CatcAsyncError(async (req: Request, res: Response, next
     try {
         const userId = req.user._id;
         const babies = await Baby.find({ userId })
-            .select('name birthDate gender weight height photo vaccine_information')
+            .select('name birthDate gender weight height photo vaccine_information allergy_information')
             .lean();
 
         console.log('Babies from DB:', babies);
@@ -144,6 +144,40 @@ export const deleteVaccineInformation = CatcAsyncError(async (req: Request, res:
             success: true,
             message: 'Aşı kaydı başarıyla silindi'
         });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
+export const addAllergyInformation = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { babyId } = req.params;
+        const { allergy_name, discovery_date, symptoms } = req.body;
+
+        const baby = await Baby.findById(babyId);
+        if (!baby) {
+            return next(new ErrorHandler('Bebek bulunamadı', 404));
+        }
+
+        if (!baby.allergy_information) {
+            baby.allergy_information = [];
+        }
+
+        const newAllergy = {
+            allergy_name,
+            discovery_date,
+            symptoms
+        };
+
+        baby.allergy_information.push(newAllergy);
+        await baby.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Alerji bilgisi başarıyla eklendi',
+            allergy: newAllergy
+        });
+
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 500));
     }
