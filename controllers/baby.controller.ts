@@ -182,3 +182,31 @@ export const addAllergyInformation = CatcAsyncError(async (req: Request, res: Re
         return next(new ErrorHandler(error.message, 500));
     }
 });
+
+export const deleteAllergyInformation = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id, allergyId } = req.params;
+
+        const baby = await Baby.findById(id);
+        if (!baby) {
+            return next(new ErrorHandler('Bebek bulunamadı', 404));
+        }
+
+        // Kullanıcının yetkisi var mı kontrol et
+        if (baby.userId.toString() !== req.user._id.toString()) {
+            return next(new ErrorHandler('Bu işlem için yetkiniz yok', 403));
+        }
+
+        // Alerji kaydını sil
+        await Baby.findByIdAndUpdate(id, {
+            $pull: { allergy_information: { _id: allergyId } }
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'Alerji kaydı başarıyla silindi'
+        });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
