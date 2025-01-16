@@ -52,7 +52,11 @@ export const createBaby = CatcAsyncError(async (req: Request, res: Response, nex
 export const getBabies = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user._id;
-        const babies = await Baby.find({ userId });
+        const babies = await Baby.find({ userId })
+            .select('name birthDate gender weight height photo vaccine_information')
+            .lean();
+
+        console.log('Babies from DB:', babies);
 
         res.status(200).json({
             success: true,

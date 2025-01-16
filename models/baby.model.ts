@@ -51,7 +51,7 @@ const babySchema: Schema<IBaby> = new Schema({
     vaccine_information: [{
         vaccine_name: { type: String, required: true },
         vaccine_date: { type: Date, required: true },
-        vaccine_notes: { type: String }
+        vaccine_notes: String
     }]
 }, { timestamps: true });
 
