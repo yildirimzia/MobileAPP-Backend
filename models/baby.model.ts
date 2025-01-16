@@ -11,6 +11,11 @@ export interface IBaby extends Document {
         url: string;
     };
     userId: string;
+    vaccine_information: {
+        vaccine_name: string;
+        vaccine_date: Date;
+        vaccine_notes?: string;
+    }[];
 }
 
 const babySchema: Schema<IBaby> = new Schema({
@@ -42,7 +47,12 @@ const babySchema: Schema<IBaby> = new Schema({
     userId: {
         type: String,
         required: true,
-    }
+    },
+    vaccine_information: [{
+        vaccine_name: { type: String, required: true },
+        vaccine_date: { type: Date, required: true },
+        vaccine_notes: { type: String }
+    }]
 }, { timestamps: true });
 
 const Baby: Model<IBaby> = mongoose.model('Baby', babySchema);
