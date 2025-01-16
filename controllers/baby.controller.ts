@@ -120,3 +120,31 @@ export const addVaccineInformation = CatcAsyncError(async (req: Request, res: Re
         return next(new ErrorHandler(error.message, 500));
     }
 });
+
+export const deleteVaccineInformation = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id, vaccineId } = req.params;
+
+        const baby = await Baby.findById(id);
+        if (!baby) {
+            return next(new ErrorHandler('Bebek bulunamadı', 404));
+        }
+
+        // Kullanıcının yetkisi var mı kontrol et
+        if (baby.userId.toString() !== req.user._id.toString()) {
+            return next(new ErrorHandler('Bu işlem için yetkiniz yok', 403));
+        }
+
+        // Aşı kaydını sil
+        await Baby.findByIdAndUpdate(id, {
+            $pull: { vaccine_information: { _id: vaccineId } }
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'Aşı kaydı başarıyla silindi'
+        });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
