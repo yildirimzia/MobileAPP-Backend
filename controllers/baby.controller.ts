@@ -53,10 +53,10 @@ export const getBabies = CatcAsyncError(async (req: Request, res: Response, next
     try {
         const userId = req.user._id;
         const babies = await Baby.find({ userId })
-            .select('name birthDate gender weight height photo vaccine_information allergy_information')
+            .select('name birthDate gender weight height photo vaccine_information.vaccine_name vaccine_information.vaccine_date vaccine_information.vaccine_notes allergy_information.allergy_name allergy_information.discovery_date allergy_information.symptoms')
             .lean();
 
-        console.log('Babies from DB:', babies);
+        console.log('Babies from DB:', JSON.stringify(babies, null, 2));
 
         res.status(200).json({
             success: true,
