@@ -53,10 +53,15 @@ export const getBabies = CatcAsyncError(async (req: Request, res: Response, next
     try {
         const userId = req.user._id;
         const babies = await Baby.find({ userId })
-            .select('name birthDate gender weight height photo vaccine_information.vaccine_name vaccine_information.vaccine_date vaccine_information.vaccine_notes allergy_information.allergy_name allergy_information.discovery_date allergy_information.symptoms')
+            .select('name birthDate gender weight height photo vaccine_information allergy_information teeth_information')
             .lean();
 
-        console.log('Babies from DB:', JSON.stringify(babies, null, 2));
+        // Debug için log ekleyelim
+        console.log('Babies from DB (with teeth):', JSON.stringify(babies.map(baby => ({
+            id: baby._id,
+            name: baby.name,
+            teeth_information: baby.teeth_information
+        })), null, 2));
 
         res.status(200).json({
             success: true,
@@ -205,6 +210,69 @@ export const deleteAllergyInformation = CatcAsyncError(async (req: Request, res:
         res.status(200).json({
             success: true,
             message: 'Alerji kaydı başarıyla silindi'
+        });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
+export const addTeethInformation = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { babyId } = req.params;
+        const { tooth_id, tooth_name, tooth_type, date } = req.body;
+
+        const baby = await Baby.findById(babyId);
+        if (!baby) {
+            return next(new ErrorHandler('Bebek bulunamadı', 404));
+        }
+
+        if (!baby.teeth_information) {
+            baby.teeth_information = [];
+        }
+
+        const newTooth = {
+            tooth_id,
+            tooth_name,
+            tooth_type,
+            date
+        };
+
+        baby.teeth_information.push(newTooth);
+        await baby.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Diş bilgisi başarıyla eklendi',
+            tooth: newTooth
+        });
+
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
+export const deleteTeethInformation = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id, teethId } = req.params;
+
+        const baby = await Baby.findById(id);
+        if (!baby) {
+            return next(new ErrorHandler('Bebek bulunamadı', 404));
+        }
+
+        // Kullanıcının yetkisi var mı kontrol et
+        if (baby.userId.toString() !== req.user._id.toString()) {
+            return next(new ErrorHandler('Bu işlem için yetkiniz yok', 403));
+        }
+
+        // Diş kaydını sil
+        await Baby.findByIdAndUpdate(id, {
+            $pull: { teeth_information: { _id: teethId } }
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'Diş kaydı başarıyla silindi'
         });
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 500));

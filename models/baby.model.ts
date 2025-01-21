@@ -21,6 +21,12 @@ export interface IBaby extends Document {
         discovery_date: Date;
         symptoms?: string;
     }[];
+    teeth_information: {
+        tooth_id: string;
+        tooth_name: string;
+        tooth_type: string;
+        date: Date;
+    }[];
 }
 
 const babySchema: Schema<IBaby> = new Schema({
@@ -62,6 +68,12 @@ const babySchema: Schema<IBaby> = new Schema({
         allergy_name: { type: String, required: true },
         discovery_date: { type: Date, required: true },
         symptoms: String
+    }],
+    teeth_information: [{
+        tooth_id: { type: String, required: true },
+        tooth_name: { type: String, required: true },
+        tooth_type: { type: String, required: true },
+        date: { type: Date, required: true }
     }]
 }, { timestamps: true });
 
