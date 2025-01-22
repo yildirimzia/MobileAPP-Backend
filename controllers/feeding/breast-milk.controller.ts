@@ -60,4 +60,4 @@ export const getBreastFeedings = CatcAsyncError(async (req: Request, res: Respon
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 400));
     }
-}); 
+});
