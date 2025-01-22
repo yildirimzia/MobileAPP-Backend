@@ -61,3 +61,31 @@ export const getBreastFeedings = CatcAsyncError(async (req: Request, res: Respon
         return next(new ErrorHandler(error.message, 400));
     }
 });
+
+export const deleteBreastFeeding = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { babyId, feedingId } = req.params;
+
+        const baby = await Baby.findById(babyId);
+        if (!baby) {
+            return next(new ErrorHandler('Bebek bulunamadı', 404));
+        }
+
+        // breast_milk array'inden feeding'i kaldır
+        const updateResult = await Baby.updateOne(
+            { _id: babyId },
+            { $pull: { breast_milk: { _id: feedingId } } }
+        );
+
+        if (updateResult.modifiedCount === 0) {
+            return next(new ErrorHandler('Emzirme kaydı bulunamadı', 404));
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Emzirme kaydı başarıyla silindi'
+        });
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+});     
