@@ -51,23 +51,17 @@ export const createBaby = CatcAsyncError(async (req: Request, res: Response, nex
 // Kullanıcının bebeklerini getirme
 export const getBabies = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userId = req.user._id;
-        const babies = await Baby.find({ userId })
-            .select('name birthDate gender weight height photo vaccine_information allergy_information teeth_information')
-            .lean();
+        const babies = await Baby.find({ userId: req.user?._id })
+            .select('name birthDate gender weight height photo vaccine_information allergy_information teeth_information breast_milk')
+            .sort({ createdAt: -1 });
 
         // Debug için log ekleyelim
-        console.log('Babies from DB (with teeth):', JSON.stringify(babies.map(baby => ({
-            id: baby._id,
-            name: baby.name,
-            teeth_information: baby.teeth_information
-        })), null, 2));
+        console.log('Babies from DB:', babies);
 
         res.status(200).json({
             success: true,
             babies
         });
-
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 400));
     }

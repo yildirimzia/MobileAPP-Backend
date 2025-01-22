@@ -27,6 +27,11 @@ export interface IBaby extends Document {
         tooth_type: string;
         date: Date;
     }[];
+    breast_milk: {
+        startTime: Date;
+        duration: number;
+        breast: 'left' | 'right';
+    }[];
 }
 
 const babySchema: Schema<IBaby> = new Schema({
@@ -74,6 +79,25 @@ const babySchema: Schema<IBaby> = new Schema({
         tooth_name: { type: String, required: true },
         tooth_type: { type: String, required: true },
         date: { type: Date, required: true }
+    }],
+    breast_milk: [{
+        startTime: {
+            type: Date,
+            required: true
+        },
+        duration: {
+            type: Number,
+            required: true
+        },
+        breast: {
+            type: String,
+            enum: ['left', 'right'],
+            required: true
+        },
+        _id: {
+            type: Schema.Types.ObjectId,
+            auto: true
+        }
     }]
 }, { timestamps: true });
 
