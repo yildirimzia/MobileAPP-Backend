@@ -33,7 +33,6 @@ export const setupCleanupJobs = () => {
             // - Süresi dolmuş geçici dosyalar
             // - Kullanılmayan oturum kayıtları vs.
 
-            console.log('Günlük temizlik işlemi tamamlandı');
         } catch (error) {
             console.error('Temizlik işlemi sırasında hata:', error);
         }

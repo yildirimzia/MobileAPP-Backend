@@ -462,8 +462,6 @@ export const updateUserPassword = CatcAsyncError(async (req: Request, res: Respo
 
 		const user = await userModel.findById(req?.user?._id).select('+password');
 
-		console.log(user, 'usersdasd');
-
 		if (user?.password === undefined) {
 			return next(new ErrorHandler('Kullanıcı bulunamadı', 400));
 		}

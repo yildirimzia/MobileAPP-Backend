@@ -56,8 +56,6 @@ export const getBabies = CatcAsyncError(async (req: Request, res: Response, next
             .sort({ createdAt: -1 });
 
         // Debug için log ekleyelim
-        console.log('Babies from DB:', babies);
-
         res.status(200).json({
             success: true,
             babies
