@@ -11,26 +11,29 @@ export const createBreastFeeding = CatcAsyncError(async (req: Request, res: Resp
     try {
         const { babyId, startTime, duration, breast } = req.body;
 
-        // Bebeği bul
         const baby = await Baby.findById(babyId);
         if (!baby) {
             return next(new ErrorHandler('Bebek bulunamadı', 404));
         }
 
-        // Emzirme kaydını bebeğin verilerine ekle
+        // Tarih verisini ISO string'e çevir
         const newFeeding = {
-            startTime: new Date(startTime),
+            startTime: new Date(startTime).toISOString(),
             duration,
             breast
         };
 
         baby.breast_milk = baby.breast_milk || [];
-        baby.breast_milk.push(newFeeding);
+        baby.breast_milk.push(newFeeding as any);
         await baby.save();
+
+        // Güncel listeyi döndür
+        const updatedBaby = await Baby.findById(babyId);
 
         res.status(201).json({
             success: true,
-            feeding: newFeeding
+            feeding: newFeeding,
+            breast_milk: updatedBaby?.breast_milk || []
         });
     } catch (error: any) {
         console.error('Hata:', error);
@@ -47,15 +50,15 @@ export const getBreastFeedings = CatcAsyncError(async (req: Request, res: Respon
             return next(new ErrorHandler('Bebek bulunamadı', 404));
         }
 
-        const feedings = baby.breast_milk || [];
-
-        // İstatistikleri hesapla
-        const stats = calculateBreastFeedingStats(feedings);
+        // Tarihleri yerel saat dilimine göre sırala
+        const feedings = (baby.breast_milk || []).sort((a, b) => {
+            return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
+        });
 
         res.status(200).json({
             success: true,
             feedings,
-            stats
+            stats: calculateBreastFeedingStats(feedings)
         });
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 400));
