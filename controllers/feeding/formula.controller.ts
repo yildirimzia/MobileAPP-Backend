@@ -6,6 +6,7 @@ import Baby from '../../models/baby.model';
 export const createFormulaFeeding = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { babyId, startTime, amount, brand, notes } = req.body;
+        console.log('Received data:', { babyId, startTime, amount, brand, notes });
 
         const baby = await Baby.findById(babyId);
         if (!baby) {
@@ -14,20 +15,23 @@ export const createFormulaFeeding = CatcAsyncError(async (req: Request, res: Res
 
         const newFeeding = {
             startTime: new Date(startTime),
-            amount, // ml cinsinden
+            amount,
             brand,
             notes
         };
 
-        baby.formula_milk = baby.formula_milk || [];
-        baby.formula_milk.push(newFeeding);
+        baby.formula = baby.formula || [];
+        baby.formula.push(newFeeding);
         await baby.save();
+
+        console.log('Updated baby data:', baby); // Debug için
 
         res.status(201).json({
             success: true,
             feeding: newFeeding
         });
     } catch (error: any) {
+        console.error('Error in createFormulaFeeding:', error);
         return next(new ErrorHandler(error.message, 400));
     }
 });
@@ -41,7 +45,7 @@ export const getFormulaFeedings = CatcAsyncError(async (req: Request, res: Respo
             return next(new ErrorHandler('Bebek bulunamadı', 404));
         }
 
-        const feedings = baby.formula_milk || [];
+        const feedings = baby.formula || [];
 
         res.status(200).json({
             success: true,
@@ -63,7 +67,7 @@ export const deleteFormulaFeeding = CatcAsyncError(async (req: Request, res: Res
 
         const updateResult = await Baby.updateOne(
             { _id: babyId },
-            { $pull: { formula_milk: { _id: feedingId } } }
+            { $pull: { formula: { _id: feedingId } } }
         );
 
         if (updateResult.modifiedCount === 0) {

@@ -52,13 +52,14 @@ export const createBaby = CatcAsyncError(async (req: Request, res: Response, nex
 export const getBabies = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const babies = await Baby.find({ userId: req.user?._id })
-            .select('name birthDate gender weight height photo vaccine_information allergy_information teeth_information breast_milk')
-            .sort({ createdAt: -1 });
+            .populate('formula')  // Formülü populate edelim
+            .select('+formula'); // Formula alanını seçelim
 
-        // Debug için log ekleyelim
+        console.log('Backend babies:', JSON.stringify(babies, null, 2)); // Debug için
+
         res.status(200).json({
             success: true,
-            babies
+            babies: babies
         });
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 400));

@@ -32,6 +32,12 @@ export interface IBaby extends Document {
         duration: number;
         breast: 'left' | 'right';
     }[];
+    formula: {
+        startTime: Date;
+        amount: number;
+        brand: string;
+        notes?: string;
+    }[];
 }
 
 const babySchema: Schema<IBaby> = new Schema({
@@ -98,6 +104,13 @@ const babySchema: Schema<IBaby> = new Schema({
             type: Schema.Types.ObjectId,
             auto: true
         }
+    }],
+    formula: [{
+        startTime: { type: Date, required: true },
+        amount: { type: Number, required: true },
+        brand: { type: String, required: true },
+        notes: String,
+        _id: { type: Schema.Types.ObjectId, auto: true }
     }]
 }, { timestamps: true });
 
