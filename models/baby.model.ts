@@ -67,6 +67,15 @@ export interface IBaby extends Document {
         amount: string;
         notes?: string;
     }>;
+    snacks: Array<{
+        startTime: Date;
+        snackType: {
+            category: string;
+            name: string;
+        };
+        amount: string;
+        notes?: string;
+    }>;
 }
 
 const babySchema: Schema<IBaby> = new Schema({
@@ -168,6 +177,16 @@ const babySchema: Schema<IBaby> = new Schema({
     supplement: [{
         startTime: { type: Date, required: true },
         supplementType: {
+            category: { type: String, required: true },
+            name: { type: String, required: true }
+        },
+        amount: { type: String, required: true },
+        notes: String,
+        _id: { type: Schema.Types.ObjectId, auto: true }
+    }],
+    snacks: [{
+        startTime: { type: Date, required: true },
+        snackType: {
             category: { type: String, required: true },
             name: { type: String, required: true }
         },

@@ -12,6 +12,7 @@ import formulaRouter from './routes/feeding/formula.route';
 import solidFoodRouter from './routes/feeding/solid-food.route';
 import waterRouter from './routes/feeding/water.route';
 import supplementRouter from './routes/feeding/supplement.route';
+import snacksRouter from './routes/feeding/snacks.route';
 dotenv.config();
 
 export const app = express();
@@ -52,6 +53,7 @@ app.use('/api/v1', formulaRouter);
 app.use('/api/v1', solidFoodRouter);
 app.use('/api/v1', waterRouter);
 app.use('/api/v1', supplementRouter);
+app.use('/api/v1', snacksRouter);
 // Test route
 app.get('/test', (req: Request, res: Response, next: NextFunction) => {
     res.status(200).json({
