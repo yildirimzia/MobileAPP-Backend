@@ -51,6 +51,12 @@ export interface IBaby extends Document {
         };
         notes?: string;
     }[];
+    water?: Array<{
+        _id: string;
+        startTime: Date;
+        amount: number;
+        notes?: string;
+    }>;
 }
 
 const babySchema: Schema<IBaby> = new Schema({
@@ -140,6 +146,12 @@ const babySchema: Schema<IBaby> = new Schema({
             hasAllergy: { type: Boolean, default: false },
             symptoms: String
         },
+        notes: String,
+        _id: { type: Schema.Types.ObjectId, auto: true }
+    }],
+    water: [{
+        startTime: { type: Date, required: true },
+        amount: { type: Number, required: true },
         notes: String,
         _id: { type: Schema.Types.ObjectId, auto: true }
     }]
