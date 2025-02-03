@@ -38,6 +38,19 @@ export interface IBaby extends Document {
         brand: string;
         notes?: string;
     }[];
+    solid_food: {
+        startTime: Date;
+        foodType: {
+            category: 'fruit' | 'vegetable' | 'grain' | 'protein' | 'milk' | 'food' | 'drink' | 'other';
+            name: string;
+        };
+        amount: string;
+        reaction?: {
+            hasAllergy: boolean;
+            symptoms?: string;
+        };
+        notes?: string;
+    }[];
 }
 
 const babySchema: Schema<IBaby> = new Schema({
@@ -109,6 +122,24 @@ const babySchema: Schema<IBaby> = new Schema({
         startTime: { type: Date, required: true },
         amount: { type: Number, required: true },
         brand: { type: String, required: true },
+        notes: String,
+        _id: { type: Schema.Types.ObjectId, auto: true }
+    }],
+    solid_food: [{
+        startTime: { type: Date, required: true },
+        foodType: {
+            category: {
+                type: String,
+                enum: ['fruit', 'vegetable', 'grain', 'protein', 'milk', 'food', 'drink', 'other'],
+                required: true
+            },
+            name: { type: String, required: true }
+        },
+        amount: { type: String, required: true },
+        reaction: {
+            hasAllergy: { type: Boolean, default: false },
+            symptoms: String
+        },
         notes: String,
         _id: { type: Schema.Types.ObjectId, auto: true }
     }]
