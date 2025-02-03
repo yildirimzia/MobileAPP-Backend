@@ -76,6 +76,13 @@ export interface IBaby extends Document {
         amount: string;
         notes?: string;
     }>;
+    growth_tracking?: Array<{
+        _id: string;
+        date: Date;
+        weight: number;
+        height: number;
+        notes?: string;
+    }>;
 }
 
 const babySchema: Schema<IBaby> = new Schema({
@@ -193,7 +200,14 @@ const babySchema: Schema<IBaby> = new Schema({
         amount: { type: String, required: true },
         notes: String,
         _id: { type: Schema.Types.ObjectId, auto: true }
-    }]
+    }],
+    growth_tracking: [{
+        _id: { type: String, required: true },
+        date: { type: Date, required: true },
+        weight: { type: Number, required: true },
+        height: { type: Number, required: true },
+        notes: String
+    }] as any
 }, { timestamps: true });
 
 const Baby: Model<IBaby> = mongoose.model('Baby', babySchema);
