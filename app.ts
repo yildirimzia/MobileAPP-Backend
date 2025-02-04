@@ -14,6 +14,7 @@ import waterRouter from './routes/feeding/water.route';
 import supplementRouter from './routes/feeding/supplement.route';
 import snacksRouter from './routes/feeding/snacks.route';
 import growthRouter from './routes/growth.route';
+import aiRouter from './routes/ai.route';
 
 dotenv.config();
 
@@ -57,6 +58,7 @@ app.use('/api/v1', waterRouter);
 app.use('/api/v1', supplementRouter);
 app.use('/api/v1', snacksRouter);
 app.use('/api/v1', growthRouter);
+app.use('/api/v1', aiRouter);
 // Test route
 app.get('/test', (req: Request, res: Response, next: NextFunction) => {
     res.status(200).json({
