@@ -7,7 +7,6 @@ import mongoose from 'mongoose';
 export const addGrowthRecord = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { babyId, date, weight, height, notes } = req.body;
-        console.log('Received data:', req.body); // Debug için
 
         const baby = await Baby.findById(babyId);
         if (!baby) {
@@ -30,7 +29,6 @@ export const addGrowthRecord = CatcAsyncError(async (req: Request, res: Response
         baby.growth_tracking.push(newRecord);
         await baby.save();
 
-        console.log('Saved record:', newRecord); // Debug için
 
         res.status(201).json({
             success: true,

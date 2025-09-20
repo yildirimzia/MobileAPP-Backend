@@ -7,7 +7,6 @@ import mongoose from 'mongoose';
 export const createSnackFeeding = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { babyId, startTime, snackType, amount, notes } = req.body;
-        console.log('Received data:', { babyId, startTime, snackType, amount, notes });
 
         const baby = await Baby.findById(babyId);
         if (!baby) {
@@ -26,7 +25,6 @@ export const createSnackFeeding = CatcAsyncError(async (req: Request, res: Respo
         baby.snacks.push(newFeeding);
         await baby.save();
 
-        console.log('Created snack feeding:', newFeeding); // Debug için
 
         res.status(201).json({
             success: true,
@@ -41,7 +39,6 @@ export const createSnackFeeding = CatcAsyncError(async (req: Request, res: Respo
 export const getSnackFeedings = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { babyId } = req.query;
-        console.log('Fetching snacks for baby:', babyId);
 
         const baby = await Baby.findById(babyId);
         if (!baby) {
@@ -52,7 +49,6 @@ export const getSnackFeedings = CatcAsyncError(async (req: Request, res: Respons
             return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
         });
 
-        console.log('Found feedings:', feedings.length); // Debug için
 
         res.status(200).json({
             success: true,
@@ -67,7 +63,6 @@ export const getSnackFeedings = CatcAsyncError(async (req: Request, res: Respons
 export const deleteSnackFeeding = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { babyId, feedingId } = req.params;
-        console.log('Deleting snack feeding:', { babyId, feedingId });
 
         const baby = await Baby.findById(babyId);
         if (!baby) {
@@ -83,7 +78,6 @@ export const deleteSnackFeeding = CatcAsyncError(async (req: Request, res: Respo
             return next(new ErrorHandler('Atıştırmalık kaydı bulunamadı', 404));
         }
 
-        console.log('Successfully deleted snack feeding'); // Debug için
 
         res.status(200).json({
             success: true,

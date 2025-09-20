@@ -55,8 +55,6 @@ export const getBabies = CatcAsyncError(async (req: Request, res: Response, next
             .populate('formula')  // Formülü populate edelim
             .select('+formula'); // Formula alanını seçelim
 
-        console.log('Backend babies:', JSON.stringify(babies, null, 2)); // Debug için
-
         res.status(200).json({
             success: true,
             babies: babies

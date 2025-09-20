@@ -6,7 +6,6 @@ import Baby from '../../models/baby.model';
 export const createFormulaFeeding = CatcAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { babyId, startTime, amount, brand, notes } = req.body;
-        console.log('Received data:', { babyId, startTime, amount, brand, notes });
 
         const baby = await Baby.findById(babyId);
         if (!baby) {
@@ -24,7 +23,6 @@ export const createFormulaFeeding = CatcAsyncError(async (req: Request, res: Res
         baby.formula.push(newFeeding);
         await baby.save();
 
-        console.log('Updated baby data:', baby); // Debug için
 
         res.status(201).json({
             success: true,
