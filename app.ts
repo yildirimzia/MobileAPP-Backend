@@ -21,9 +21,11 @@ dotenv.config();
 export const app = express();
 
 const allowedOrigins = [
-    'http://localhost:8081',       // Frontend tarayıcısı
-    'http://192.168.1.198:8081',  // iOS simülatöründen erişim
-    'http://localhost:8000'   // Backend kendi kendine erişim yapabilir
+    'http://localhost:8081',
+    'http://192.168.1.198:8081',
+    'http://192.168.1.172:8081',  // iOS simülatör
+    'http://localhost:8000',
+    process.env.ORIGIN || 'http://lc4wo0gss4w848kc08o080sw.140.245.14.249.sslip.io'
 ];
 
 // CORS options
