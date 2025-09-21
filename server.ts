@@ -1,3 +1,4 @@
+import "dotenv/config";   
 import app from './app';
 import dotenv from 'dotenv';
 import connectDB from './utils/db';
@@ -11,7 +12,7 @@ cloudinary.config({
     api_secret: process.env.CLOUD_API_SECRET
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8000;
 
 app.listen(PORT, () => {
     connectDB();
